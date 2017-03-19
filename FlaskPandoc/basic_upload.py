@@ -1,46 +1,23 @@
-from flask import Flask, flash, request, redirect, url_for, send_from_directory
-from flask_restful import Resource, Api
-from werkzeug.utils import secure_filename
-import ConvertPandoc
+# Taken from http://flask.pocoo.org/docs/0.12/patterns/fileuploads/
+
 import os
+from flask import Flask, flash, request, redirect, url_for
+from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = '/tmp/uploaded_files/'
-OUTPUT_FOLDER = '/tmp/output_files/'
-ALLOWED_EXTENSIONS = set(['md'])
+ALLOWED_EXTENSIONS = set(['md', 'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.secret_key = "lolz"
+app.secret_key = "ODSFDSFDSFHDSFHDSAFSAK"
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/pandoc/<filename>', methods=['GET'])
-def show_index(filename):
-    input_file_path = UPLOAD_FOLDER + filename
-    output_file_path = OUTPUT_FOLDER + filename
-    output_file_path = output_file_path.rsplit( ".", 1 )[ 0 ]
-    output_file_path = output_file_path + ".docx"
-
-    if not os.path.isfile(input_file_path):
-        return "file not uploaded"
-    pandoc = ConvertPandoc.ConvertPandoc(input_file_path, output_file_path)
-    if not pandoc:
-        return "problem converting. Check debug log!"
-
-    success = pandoc.convert()
-    return_value = (output_file_path, success)
-    return str(return_value)
-
-@app.route('/download/<filename>', methods=['GET'])
-def download_fie(filename):
-    output_file_path = OUTPUT_FOLDER + filename
-    if not os.path.isfile(output_file_path):
-        return "file not converted"
-
-    return send_from_directory (OUTPUT_FOLDER, filename, as_attachment=True,
-                        mimetype='application/octet-stream')
+@app.route('/', methods=['GET'])
+def show_index():
+    return ""
 
 @app.route('/upload/', methods=['GET', 'POST'])
 def upload_file():
@@ -65,7 +42,7 @@ def upload_file():
             print filename
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             print "allegedly uploaded file"
-            return """File uploaded"""
+            return redirect('/')
     return '''
     <!doctype html>
     <title>Upload new File</title>
@@ -78,4 +55,3 @@ def upload_file():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
